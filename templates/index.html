@@ -1,0 +1,319 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Home
+{% endblock %}
+
+{% block content %}
+
+{% if expenses %}
+
+
+<a href="{{ url_for('register') }}">Register</a>
+<br>
+
+<a href="{{ url_for('login') }}">Login</a>
+<br>
+
+<a href="{{ url_for('logout') }}">Logout</a>
+
+<div class="dashboard">
+
+    <div class="card total-card">
+        <h3>💰 Total Spending</h3>
+        <p>${{ "%.2f"|format(total) }}</p>
+    </div>
+
+    <div class="card count-card">
+        <h3>📋 Total Expenses</h3>
+        <p>{{ expense_count }}</p>
+    </div>
+
+    <div class="card largest-card">
+        <h3>💸 Largest Expense</h3>
+        <p>${{ "%.2f"|format(largest_expense) }}</p>
+    </div>
+
+    <div class="card average-card">
+        <h3>📊 Average Expense</h3>
+        <p>${{ "%.2f"|format(average_expense) }}</p>
+    </div>
+       
+</div>
+
+<div class="card highest-category-card">
+    <h3> 🏆 Highest Category </h3>
+    <p class="category-name">{{ highest_category[0] }}</p>
+    <p class="category-total">${{ "%.2f"|format(highest_category[1]) }}</p>
+</div>
+
+{% else %}
+
+    <div class="panel empty-state">
+        <h2>No expenses yet</h2>
+        <p>Add your first expense below.</p>
+    </div>
+
+{% endif %}
+
+<div class="panel add-expense-panel">
+    <h2>Add Expense</h2>
+
+    <form method="POST" class="expense-form">
+
+        <div class="form-group">
+            <label for="category">Category</label>
+            <input id="category" type="text" 
+                   name="category" 
+                   placeholder="e.g. Groceries">
+        </div>
+
+        <div class="form-group">
+            <label for="amount">Amount</label>
+            <input
+                id="amount" type="number" step="0.01"
+                name="amount" placeholder="0.00">
+        </div>
+
+        <button type="submit" class="primary-button">
+            Add Expense</button>
+
+    </form>
+</div>
+
+{% if expenses %}
+
+<div class="panel bar">
+   
+    <h2>Category Spending (Bar)</h2>
+
+    <div class="bar-chart-container">
+    <canvas id="expenseChartBar"></canvas>
+    </div>
+</div>  
+
+<div class="panel pie">
+    
+    <h2>Category Spending (Pie)</h2>
+    
+    <div class="pie-chart-container">
+    <canvas id="expenseChartPie"></canvas>
+    </div>
+</div>
+
+<div class="panel">
+    <h2>Expenses</h2>
+
+    <form method="GET" action="/" class="filter-form">
+
+        <input
+            type="text" name="search"
+            placeholder="Search by category"
+            value="{{ search }}">
+        
+        <input type="month" name="month" value="{{ month }}">
+
+        <select name="sort">
+        
+            <option value="newest" 
+                {% if sort == "newest" %}selected{% endif %}>
+                 Newest
+            </option>
+                    
+            <option value="oldest" 
+                {% if sort == "oldest" %}selected{% endif %}>
+                Oldest
+            </option>
+
+            <option value="amount_desc" 
+                {% if sort == "amount_desc" %}selected{% endif %}>
+                Amount (Highest)
+            </option>
+
+            <option value="amount_asc" 
+                {% if sort == "amount_asc" %}selected{% endif %}>
+                Amount (Lowest)
+            </option>
+
+            <option value="category_asc" 
+                {% if sort == "category_asc" %}selected{% endif %}>
+                Category (A-Z)
+            </option>
+
+            <option value="category_desc"
+                {% if sort == "category_desc" %}selected{% endif %}>
+                Category (Z-A)
+            </option>
+
+        </select>
+
+        <button type="submit" class="secondary-button">
+            Apply
+        </button>
+
+        <a href="/" class="clear-link">Clear</a>
+
+    </form>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for expense in expenses %}
+
+        <tr>
+            <td>{{ loop.index  }}</td>
+            <td>{{ expense[1] }}</td>
+            <td>${{ "%.2f"|format(expense[2]) }}</td>
+            <td>{{ expense[3] }}</td>
+
+            <td class="actions">
+                <a 
+                class="button edit-button" 
+                href="/edit/{{ expense[0] }}">Edit</a>
+
+                <form 
+                    action="/delete/{{ expense[0] }}" 
+                    method="POST" 
+                    class="delete-form"
+                    onsubmit="return confirm('Are you sure you want to delete this expense?');">
+                    
+                    <button 
+                        class="button delete-button" 
+                        type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="pagination">
+
+    {% if page > 1 %}
+        <a href="?page={{ page - 1 }}&search={{search}}&month={{month}}&sort={{sort}}">← Previous</a>
+    {% endif %}
+
+    {% for page_number in range(1, total_pages + 1) %}
+        <a href="?page={{ page_number }}&search={{search}}&month={{month}}&sort={{sort}}"
+            class="{% if page_number == page %}active-page{% endif %}">
+            {{ page_number }}
+        </a>
+    {% endfor %}
+
+    {% if page < total_pages %}
+        <a href="?page={{ page + 1 }}&search={{search}}&month={{month}}&sort={{sort}}">Next →</a>
+    {% endif %}
+
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const categories = {{ chart_categories | tojson }};
+const totals = {{ chart_totals | tojson }};
+
+const ctxBar = document.getElementById("expenseChartBar");
+const ctxPie = document.getElementById("expenseChartPie");
+
+new Chart(ctxBar, {
+    type: "bar",
+
+    data: {
+        labels: categories,
+
+        datasets: [{
+            label: "Total spending $ ",
+            data: totals,
+            backgroundColor: "#3b82f6",
+            borderRadius: 8,
+            hoverBackgroundColor: "#2563eb",
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        
+        animation: {
+            duration: 2000
+            
+        },
+
+        plugins: {
+            legend: {
+                display: false,
+
+            },
+
+            title: {
+            display: true
+            }
+        },
+
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { callback: function(value) {
+                    return "$" + value; }
+}
+            }
+        }
+
+    
+    }}
+);
+
+new Chart(ctxPie, {
+    type: "pie",
+
+    data: {
+        labels: categories,
+        
+        datasets: [{
+            data: totals,
+            label: "Total spending $ "
+        
+        
+        }] },
+
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        
+        plugins: {
+             legend: {
+                display: true,
+                position: "right"
+            },
+          
+            title: {
+            display: true
+            }
+        },
+        
+        
+       } });
+
+
+</script>
+
+
+{% endblock %}
+
+
