@@ -15,6 +15,28 @@ h1 {
     text-align: center;
 }
 
+.logout-button {
+    display: inline-block;
+    background-color: #ef4444;
+    color: white;
+    text-decoration: none;
+
+    padding: 10px 20px;
+    border-radius: 8px;
+
+    font-weight: 600;
+}
+
+.logout-button:hover {
+    background-color: #dc2626;
+}
+
+.logout-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
 form {
     margin-bottom: 20px;
 }

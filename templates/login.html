@@ -5,7 +5,10 @@ Login Page
 {% endblock %}
 
 {% block content %}
-
+<p>
+    Don't have an account?
+    <a href="{{ url_for('register') }}">Register</a>
+</p>
 <form method="POST" >
      <label for="username">Username</label>
     <input id="username" type="text" name="username">

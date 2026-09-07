@@ -6,16 +6,18 @@ Home
 
 {% block content %}
 
+{% if session.get("user_id") %}
+    <div class="logout-container">
+    <a href="{{ url_for('logout') }}" class="logout-button">
+        Logout
+    </a>
+    </div>
+{% else %}    
+    <a href="{{ url_for('register') }}">Register</a>
+    <a href="{{ url_for('login') }}">Login</a>
+{% endif %}
+
 {% if expenses %}
-
-
-<a href="{{ url_for('register') }}">Register</a>
-<br>
-
-<a href="{{ url_for('login') }}">Login</a>
-<br>
-
-<a href="{{ url_for('logout') }}">Logout</a>
 
 <div class="dashboard">
 
