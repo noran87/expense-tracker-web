@@ -66,3 +66,4 @@ Through this project, I practiced building a complete web application with Flask
 ![Spending Visualization](screenshots/chart.png)
 
 ## Live Demo
+https://noran8.pythonanywhere.com
